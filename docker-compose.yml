@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  motoserver:
+    image: motoserver/moto:latest
+    container_name: moto
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "5000:5000"
+    networks:
+      - buildkite-net
+    environment:
+      - MOTO_PORT=5000
+
+  buildkite-agent:
+    image: buildkite/agent:ubuntu-lts
+    container_name: buildkite-agent
+    user: ${HOST_USERNAME}
+    volumes:
+      - /home/${HOST_USERNAME}/.ssh:/home/${HOST_USERNAME}/.ssh
+      - /home/${HOST_USERNAME}/.aws:/home/${HOST_USERNAME}/.aws
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./buildkite:/home/${HOST_USERNAME}/.buildkite-agent
+    networks:
+      - buildkite-net
+    environment:
+      - BUILDKITE_AGENT_TOKEN=${BUILDKITE_AGENT_TOKEN}
+      - BUILDKITE_BUILD_PATH=/home/${HOST_USERNAME}/.buildkite-agent/builds
+      - BUILDKITE_AGENT_NAME=buildkite-agent-ubuntu-jammy
+      - BUILDKITE_BIN_PATH=/home/${HOST_USERNAME}/.buildkite-agent/bin
+      - BUILDKITE_HOOKS_PATH=/home/${HOST_USERNAME}/.buildkite-agent/hooks
+      - BUILDKITE_PLUGINS_PATH=/home/${HOST_USERNAME}/.buildkite-agent/plugins
+      - AWS_ACCESS_KEY_ID=testing
+      - AWS_SECRET_ACCESS_KEY=testing
+      - AWS_SECURITY_TOKEN=testing
+      - AWS_SESSION_TOKEN=testing
+      - AWS_DEFAULT_REGION=us-east-1
+networks:
+  buildkite-net:
+    name: buildkite-net
